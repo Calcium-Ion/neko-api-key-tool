@@ -1,3 +1,5 @@
+![img.png](img.png)
+
 # 使用方法
 复制.env.example文件为.env
 ```
@@ -14,3 +16,5 @@ SHOW_BALANCE="true"
 # BaseURL 结尾不要带/
 BASE_URL="https://nekoapi.com"
 ```
+
+展示使用明细功能需要使用的魔改版One API，项目地址：https://github.com/Calcium-Ion/one-api
