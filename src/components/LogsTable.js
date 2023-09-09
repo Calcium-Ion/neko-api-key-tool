@@ -174,9 +174,13 @@ const LogsTable = () => {
         if (key === '') {
             alert('请输入你的key');
         }
-        const subscription = await API.get( process.env.REACT_APP_BASE_URL +  `/v1/dashboard/billing/subscription`, {headers: {Authorization: `Bearer ${key}`}});
-        const subscriptionData = subscription.data;
-        setBalance(subscriptionData.hard_limit_usd);
+        try {
+            const subscription = await API.get( process.env.REACT_APP_BASE_URL +  `/v1/dashboard/billing/subscription`, {headers: {Authorization: `Bearer ${key}`}});
+            const subscriptionData = subscription.data;
+            setBalance(subscriptionData.hard_limit_usd);
+        } catch (e) {
+            // alert("查询失败，请输入正确的key");
+        }
         //设置开始日期为100天前，结束时间为现在 yyyy-mm-dd
         let now = new Date();
         let start = new Date(now.getTime() - 100 * 24 * 3600 * 1000);
