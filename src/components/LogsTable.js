@@ -40,6 +40,7 @@ const KeyUsage = () => {
     const [key, setKey] = useState('');
     const [balance, setBalance] = useState(0);
     const [usage, setUsage] = useState(0);
+    const [accessdate, setAccessDate] = useState(0);
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [activeKeys, setActiveKeys] = useState([]);
@@ -48,6 +49,7 @@ const KeyUsage = () => {
     const resetData = () => {
         setBalance("未知");
         setUsage("未知");
+        setAccessDate("未知");
         setLogs([]);
         setTokenValid(false);
     };
@@ -302,15 +304,19 @@ const KeyUsage = () => {
                         <Spin spinning={loading}>
                             <div style={{ marginBottom: 16 }}>
                                 <Text type="secondary">
-                                    令牌总额：{balance === 100000000 ? "无限" : balance === "未知" ? "未知" : `${balance}`}
+                                    令牌总额：{balance === 100000000 ? "无限" : balance === "未知" ? "未知" : `$${balance}`}
                                 </Text>
                                 <br /><br />
                                 <Text type="secondary">
-                                    剩余额度：{balance === 100000000 ? "无限制" : balance === "未知" || usage === "未知" ? "未知" : `${balance - usage}`}
+                                    剩余额度：{balance === 100000000 ? "无限制" : balance === "未知" || usage === "未知" ? "未知" : `$${balance - usage}`}
                                 </Text>
                                 <br /><br />
                                 <Text type="secondary">
-                                    已用额度：{balance === 100000000 ? "不进行计算" : usage === "未知" ? "未知" : `${usage}`}
+                                    已用额度：{balance === 100000000 ? "不进行计算" : usage === "未知" ? "未知" : `$${usage}`}
+                                </Text>
+                                <br /><br />
+                                <Text type="secondary">
+                                    有效期至：{accessdate === 0 ? '永不过期' : accessdate === "未知" ? '未知' : renderTimestamp(accessdate)}
                                 </Text>
                             </div>
                         </Spin>
