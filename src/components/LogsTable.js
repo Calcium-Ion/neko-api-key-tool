@@ -1,381 +1,347 @@
-import React, {useEffect, useState} from 'react';
-import {Button, Form, Header, Input, Label, Pagination, Segment, Select, Table} from 'semantic-ui-react';
-import {API, isAdmin, showError, showInfo, timestamp2string} from '../helpers';
+import React, { useState } from 'react';
+import { Button, Input, Typography, Table, Tag, Spin, Card, Collapse, Toast, Space } from '@douyinfe/semi-ui';
+import { IconSearch, IconCopy, IconDownload } from '@douyinfe/semi-icons';
+import { IconTag } from '@douyinfe/semi-icons-lab';
+import { API, timestamp2string, copy } from '../helpers';
+import { stringToColor } from '../helpers/render';
+import { ITEMS_PER_PAGE } from '../constants';
+import { renderModelPrice, renderQuota } from '../helpers/render';
+import Paragraph from '@douyinfe/semi-ui/lib/es/typography/paragraph';
+import { Tooltip, Modal } from '@douyinfe/semi-ui';
+import Papa from 'papaparse';
 
-import {ITEMS_PER_PAGE} from '../constants';
-import {renderQuota} from '../helpers/render';
+const { Text } = Typography;
+const { Panel } = Collapse;
 
 function renderTimestamp(timestamp) {
-    return (
-        <>
-            {timestamp2string(timestamp)}
-        </>
-    );
+    return timestamp2string(timestamp);
 }
 
-const MODE_OPTIONS = [
-    {key: 'all', text: '全部用户', value: 'all'},
-    {key: 'self', text: '当前用户', value: 'self'}
-];
-
-const LOG_OPTIONS = [
-    {key: '0', text: '全部', value: 0},
-    {key: '1', text: '充值', value: 1},
-    {key: '2', text: '消费', value: 2},
-    {key: '3', text: '管理', value: 3},
-    {key: '4', text: '系统', value: 4}
-];
-
-function renderType(type) {
-    switch (type) {
-        case 1:
-            return <Label basic color='green'> 充值 </Label>;
-        case 2:
-            return <Label basic color='olive'> 消费 </Label>;
-        case 3:
-            return <Label basic color='orange'> 管理 </Label>;
-        case 4:
-            return <Label basic color='purple'> 系统 </Label>;
-        default:
-            return <Label basic color='black'> 未知 </Label>;
+function renderIsStream(bool) {
+    if (bool) {
+        return <Tag color="blue" size="large">流</Tag>;
+    } else {
+        return <Tag color="purple" size="large">非流</Tag>;
     }
 }
 
-const LogsTable = () => {
-    const [key, setKey] = useState('')
-    const [balance, setBalance] = useState(0)
-    const [usage, setUsage] = useState(0)
+function renderUseTime(type) {
+    const time = parseInt(type);
+    if (time < 101) {
+        return <Tag color="green" size="large"> {time} s </Tag>;
+    } else if (time < 300) {
+        return <Tag color="orange" size="large"> {time} s </Tag>;
+    } else {
+        return <Tag color="red" size="large"> {time} s </Tag>;
+    }
+}
+
+const KeyUsage = () => {
+    const [key, setKey] = useState('');
+    const [balance, setBalance] = useState(0);
+    const [usage, setUsage] = useState(0);
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [activePage, setActivePage] = useState(1);
-    const [searchKeyword, setSearchKeyword] = useState('');
-    const [searching, setSearching] = useState(false);
-    const [logType, setLogType] = useState(0);
-    const isAdminUser = isAdmin();
-    let now = new Date();
-    const [inputs, setInputs] = useState({
-        username: '',
-        token_name: '',
-        model_name: '',
-        start_timestamp: timestamp2string(0),
-        end_timestamp: timestamp2string(now.getTime() / 1000 + 3600)
-    });
-    const {username, token_name, model_name, start_timestamp, end_timestamp} = inputs;
+    const [activeKeys, setActiveKeys] = useState([]);
+    const [tokenValid, setTokenValid] = useState(false);
 
-    const [stat, setStat] = useState({
-        quota: 0,
-        token: 0
-    });
-
-    const handleInputChange = (e, {name, value}) => {
-        setInputs((inputs) => ({...inputs, [name]: value}));
+    const resetData = () => {
+        setBalance("未知");
+        setUsage("未知");
+        setLogs([]);
+        setTokenValid(false);
     };
 
-    const getLogSelfStat = async () => {
-        // let localStartTimestamp = Date.parse(start_timestamp) / 1000;
-        // let localEndTimestamp = Date.parse(end_timestamp) / 1000;
-        // let res = await API.get(`/api/log/self/stat?type=${logType}&token_name=${token_name}&model_name=${model_name}&start_timestamp=${localStartTimestamp}&end_timestamp=${localEndTimestamp}`);
-        // const { success, message, data } = res.data;
-        // if (success) {
-        //   setStat(data);
-        // } else {
-        //   showError(message);
-        // }
-    };
-
-    const getLogStat = async () => {
-        // let localStartTimestamp = Date.parse(start_timestamp) / 1000;
-        // let localEndTimestamp = Date.parse(end_timestamp) / 1000;
-        // let res = await API.get(`/api/log/stat?type=${logType}&username=${username}&token_name=${token_name}&model_name=${model_name}&start_timestamp=${localStartTimestamp}&end_timestamp=${localEndTimestamp}`);
-        // const { success, message, data } = res.data;
-        // if (success) {
-        //   setStat(data);
-        // } else {
-        //   showError(message);
-        // }
-    };
-
-    const loadLogs = async (startIdx) => {
-        // let url = '';
-        // let localStartTimestamp = Date.parse(start_timestamp) / 1000;
-        // let localEndTimestamp = Date.parse(end_timestamp) / 1000;
-        // if (isAdminUser) {
-        //   url = `/api/log/?p=${startIdx}&type=${logType}&username=${username}&token_name=${token_name}&model_name=${model_name}&start_timestamp=${localStartTimestamp}&end_timestamp=${localEndTimestamp}`;
-        // } else {
-        //   url = `/api/log/self/?p=${startIdx}&type=${logType}&token_name=${token_name}&model_name=${model_name}&start_timestamp=${localStartTimestamp}&end_timestamp=${localEndTimestamp}`;
-        // }
-        // const res = await API.get(url);
-        // const { success, message, data } = res.data;
-        // if (success) {
-        //   if (startIdx === 0) {
-        //     setLogs(data);
-        //   } else {
-        //     let newLogs = [...logs];
-        //     newLogs.splice(startIdx * ITEMS_PER_PAGE, data.length, ...data);
-        //     setLogs(newLogs);
-        //   }
-        // } else {
-        //   showError(message);
-        // }
-        // setLoading(false);
-    };
-
-    const onPaginationChange = (e, {activePage}) => {
-        (async () => {
-            if (activePage === Math.ceil(logs.length / ITEMS_PER_PAGE) + 1) {
-                // In this case we have to load more data and then append them.
-                await loadLogs(activePage - 1);
-            }
-            setActivePage(activePage);
-        })();
-    };
-
-    const refresh = async () => {
-        setLoading(true);
-        setActivePage(1)
-        await loadLogs(0);
-        // if (isAdminUser) {
-        //   getLogStat().then();
-        // } else {
-        //   getLogSelfStat().then();
-        // }
-    };
-
-    // useEffect(() => {
-    //   refresh().then();
-    // }, [logType]);
-
-    const searchLogs = async () => {
+    const fetchData = async () => {
         if (key === '') {
-            alert('请输入搜索关键字');
+            Toast.warning('请先输入令牌，再进行查询');
             return;
         }
-        console.log(key);
-        setSearching(true);
-        const res = await API.get( process.env.REACT_APP_BASE_URL +  `/api/log/token?key=${key}`);
-        const {success, message, data} = res.data;
-        if (success) {
-            setLogs(data);
-            var quota = 0
-            for (let i = 0; i < data.length; i++) {
-                quota += data[i].quota
-            }
-            setStat({
-                quota: quota,
-            })
-            setActivePage(1);
-        } else {
-            alert("查询失败，请输入正确的key");
-        }
-        setSearching(false);
-    };
-
-    const getBalance = async () => {
-        if (key === '') {
-            alert('请输入你的key');
-        }
-        try {
-            const subscription = await API.get( process.env.REACT_APP_BASE_URL +  `/v1/dashboard/billing/subscription`, {headers: {Authorization: `Bearer ${key}`}});
-            const subscriptionData = subscription.data;
-            setBalance(subscriptionData.hard_limit_usd);
-        } catch (e) {
-            // alert("查询失败，请输入正确的key");
-        }
-        //设置开始日期为100天前，结束时间为现在 yyyy-mm-dd
-        let now = new Date();
-        let start = new Date(now.getTime() - 100 * 24 * 3600 * 1000);
-        let start_date = start.getFullYear() + '-' + (start.getMonth() + 1) + '-' + start.getDate();
-        let end_date = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
-        const res = await API.get( process.env.REACT_APP_BASE_URL +  `/v1/dashboard/billing/usage?start_date=${start_date}&end_date=${end_date}`, {headers: {Authorization: `Bearer ${key}`}});
-        const data = res.data;
-        setUsage(data.total_usage/100)
-    }
-
-    const handleKeywordChange = async (e, {value}) => {
-        setSearchKeyword(value.trim());
-    };
-
-    const sortLog = (key) => {
-        if (logs.length === 0) return;
         setLoading(true);
-        let sortedLogs = [...logs];
-        if (typeof sortedLogs[0][key] === 'string') {
-            sortedLogs.sort((a, b) => {
-                return ('' + a[key]).localeCompare(b[key]);
-            });
+        try {
+            if (process.env.REACT_APP_SHOW_BALANCE === "true") {
+                const subscription = await API.get(`${process.env.REACT_APP_BASE_URL}/v1/dashboard/billing/subscription`, {
+                    headers: { Authorization: `Bearer ${key}` },
+                });
+                const subscriptionData = subscription.data;
+                setBalance(subscriptionData.hard_limit_usd);
+                setTokenValid(true);
+
+                let now = new Date();
+                let start = new Date(now.getTime() - 100 * 24 * 3600 * 1000);
+                let start_date = start.getFullYear() + '-' + (start.getMonth() + 1) + '-' + start.getDate();
+                let end_date = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+                const res = await API.get(`${process.env.REACT_APP_BASE_URL}/v1/dashboard/billing/usage?start_date=${start_date}&end_date=${end_date}`, {
+                    headers: { Authorization: `Bearer ${key}` },
+                });
+                const data = res.data;
+                setUsage(data.total_usage / 100);
+            }
+
+            if (process.env.REACT_APP_SHOW_DETAIL === "true") {
+                const logRes = await API.get(`${process.env.REACT_APP_BASE_URL}/api/log/token?key=${key}`);
+                const { success, message, data: logData } = logRes.data;
+                if (success) {
+                    setLogs(logData.reverse());
+                    let quota = 0;
+                    for (let i = 0; i < logData.length; i++) {
+                        quota += logData[i].quota;
+                    }
+                    setActiveKeys(['1', '2']); // 自动展开两个折叠面板
+                } else {
+                    Toast.error('查询调用详情失败，请输入正确的令牌');
+                }
+            }
+            setLoading(false);
+        } catch (e) {
+            Toast.error("查询失败，请输入正确的令牌");
+            resetData(); // 如果发生错误，重置所有数据为默认值
+            setLoading(false);
+            return;
+        }
+    };
+
+    const copyText = async (text) => {
+        if (await copy(text)) {
+            Toast.success('已复制：' + text);
         } else {
-            sortedLogs.sort((a, b) => {
-                if (a[key] === b[key]) return 0;
-                if (a[key] > b[key]) return -1;
-                if (a[key] < b[key]) return 1;
-            });
+            Modal.error({ title: '无法复制到剪贴板，请手动复制', content: text });
         }
-        if (sortedLogs[0].id === logs[0].id) {
-            sortedLogs.reverse();
-        }
-        setLogs(sortedLogs);
-        setLoading(false);
+    };
+
+    const columns = [
+        {
+            title: '时间',
+            dataIndex: 'created_at',
+            render: renderTimestamp,
+            sorter: (a, b) => a.created_at - b.created_at,
+        },
+        {
+            title: '模型',
+            dataIndex: 'model_name',
+            render: (text, record, index) => {
+                return record.type === 0 || record.type === 2 ? (
+                    <div>
+                        <Tag
+                            color={stringToColor(text)}
+                            size="large"
+                            onClick={() => {
+                                copyText(text);
+                            }}
+                        >
+                            {' '}
+                            {text}{' '}
+                        </Tag>
+                    </div>
+                ) : (
+                    <></>
+                );
+            },
+            sorter: (a, b) => ('' + a.model_name).localeCompare(b.model_name),
+        },
+        {
+            title: '用时',
+            dataIndex: 'use_time',
+            render: (text, record, index) => {
+                return (
+                    <div>
+                        <Space>
+                            {renderUseTime(text)}
+                            {renderIsStream(record.is_stream)}
+                        </Space>
+                    </div>
+                );
+            },
+            sorter: (a, b) => a.use_time - b.use_time,
+        },
+        {
+            title: '提示',
+            dataIndex: 'prompt_tokens',
+            render: (text, record, index) => {
+                return record.type === 0 || record.type === 2 ? <div>{<span> {text} </span>}</div> : <></>;
+            },
+            sorter: (a, b) => a.prompt_tokens - b.prompt_tokens,
+        },
+        {
+            title: '补全',
+            dataIndex: 'completion_tokens',
+            render: (text, record, index) => {
+                return parseInt(text) > 0 && (record.type === 0 || record.type === 2) ? (
+                    <div>{<span> {text} </span>}</div>
+                ) : (
+                    <></>
+                );
+            },
+            sorter: (a, b) => a.completion_tokens - b.completion_tokens,
+        },
+        {
+            title: '花费',
+            dataIndex: 'quota',
+            render: (text, record, index) => {
+                return record.type === 0 || record.type === 2 ? <div>{renderQuota(text, 6)}</div> : <></>;
+            },
+            sorter: (a, b) => a.quota - b.quota,
+        },
+        {
+            title: '详情',
+            dataIndex: 'content',
+            render: (text, record, index) => {
+                if (record.other === '') {
+                    record.other = '{}';
+                }
+                let other = JSON.parse(record.other);
+                if (other == null) {
+                    return (
+                        <Paragraph
+                            ellipsis={{
+                                rows: 2,
+                                showTooltip: {
+                                    type: 'popover',
+                                },
+                            }}
+                        >
+                            {text}
+                        </Paragraph>
+                    );
+                }
+                let content = renderModelPrice(
+                    record.prompt_tokens,
+                    record.completion_tokens,
+                    other.model_ratio,
+                    other.model_price,
+                    other.completion_ratio,
+                    other.group_ratio,
+                );
+                return (
+                    <Tooltip content={content}>
+                        <Paragraph
+                            ellipsis={{
+                                rows: 2,
+                            }}
+                        >
+                            {text}
+                        </Paragraph>
+                    </Tooltip>
+                );
+            },
+        },
+    ];
+
+    const copyTokenInfo = (e) => {
+        e.stopPropagation();
+        const info = `令牌总额: ${balance === 100000000 ? '无限' : balance}
+剩余额度: ${balance === 100000000 ? '无限制' : balance - usage}
+已用额度: ${balance === 100000000 ? '不进行计算' : usage}`;
+        copyText(info);
+    };
+
+    const exportCSV = (e) => {
+        e.stopPropagation();
+        const csvData = logs.map(log => ({
+            '时间': renderTimestamp(log.created_at),
+            '模型': log.model_name,
+            '用时': log.use_time,
+            '提示': log.prompt_tokens,
+            '补全': log.completion_tokens,
+            '花费': log.quota,
+            '详情': log.content,
+        }));
+        const csvString = '\ufeff' + Papa.unparse(csvData);  // 使用PapaParse库来转换数据
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'data.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
-        <>
-            <div style={{
-                width: '100%',
-            }}>
-                <Input placeholder='请输入key' value={key} name='token' action={
-                    <Button icon='search' onClick={
-                        () => {
-                            console.log(process.env.REACT_APP_SHOW_BALANCE);
-                            console.log(typeof process.env.REACT_APP_SHOW_BALANCE);
-                            console.log(process.env.REACT_APP_SHOW_BALANCE === 'true');
-                            if (process.env.REACT_APP_SHOW_BALANCE == "true") {
-                                getBalance();
-                            }
-                            if (process.env.REACT_APP_SHOW_DETAIL == 'true') {
-                                searchLogs();
-                            }
+        <Card>
+            <div style={{ marginBottom: 16 }}>
+                <Input
+                    showClear
+                    value={key}
+                    onChange={(value) => setKey(value)}
+                    placeholder="请输入要查询的令牌（sk-xxx）"
+                    prefix={<IconSearch />}
+                    suffix={
+                        <Button
+                            onClick={fetchData}
+                            loading={loading}
+                        >
+                            查询
+                        </Button>
+                    }
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            fetchData();
                         }
-                    } loading={searching}/>
-                } onChange={
-                    (e, {value}) => setKey(value)
-                }
-                       style={{
-                           width: '50%',
-                       }}
+                    }}
                 />
             </div>
-            <Segment>
-                <Header as='h3'>
-                    {process.env.REACT_APP_SHOW_BALANCE == "true" && <span>余额：{balance}$</span>}
-                    <br/>
-                    {process.env.REACT_APP_SHOW_DETAIL == "true" && <span>本月已用：{usage}$</span>}
-                </Header>
-                {process.env.REACT_APP_SHOW_DETAIL == "true" &&
-                    <Table basic compact size='small'>
-                        <Table.Header>
-                            <Table.Row>
-                                <Table.HeaderCell
-                                    style={{cursor: 'pointer'}}
-                                    onClick={() => {
-                                        sortLog('created_time');
-                                    }}
-                                    width={2}
-                                >
-                                    时间
-                                </Table.HeaderCell>
-                                <Table.HeaderCell
-                                    style={{cursor: 'pointer'}}
-                                    onClick={() => {
-                                        sortLog('type');
-                                    }}
-                                    width={1}
-                                >
-                                    类型
-                                </Table.HeaderCell>
-                                <Table.HeaderCell
-                                    style={{cursor: 'pointer'}}
-                                    onClick={() => {
-                                        sortLog('model_name');
-                                    }}
-                                    width={2}
-                                >
-                                    模型
-                                </Table.HeaderCell>
-                                <Table.HeaderCell
-                                    style={{cursor: 'pointer'}}
-                                    onClick={() => {
-                                        sortLog('prompt_tokens');
-                                    }}
-                                    width={1}
-                                >
-                                    提示
-                                </Table.HeaderCell>
-                                <Table.HeaderCell
-                                    style={{cursor: 'pointer'}}
-                                    onClick={() => {
-                                        sortLog('completion_tokens');
-                                    }}
-                                    width={1}
-                                >
-                                    补全
-                                </Table.HeaderCell>
-                                <Table.HeaderCell
-                                    style={{cursor: 'pointer'}}
-                                    onClick={() => {
-                                        sortLog('quota');
-                                    }}
-                                    width={2}
-                                >
-                                    消耗额度
-                                </Table.HeaderCell>
-                                <Table.HeaderCell
-                                    style={{cursor: 'pointer'}}
-                                    onClick={() => {
-                                        sortLog('content');
-                                    }}
-                                    width={isAdminUser ? 4 : 5}
-                                >
-                                    详情
-                                </Table.HeaderCell>
-                            </Table.Row>
-                        </Table.Header>
-
-                        <Table.Body>
-                            {logs
-                                .slice(
-                                    (activePage - 1) * ITEMS_PER_PAGE,
-                                    activePage * ITEMS_PER_PAGE
-                                )
-                                .map((log, idx) => {
-                                    if (log.deleted) return <></>;
-                                    return (
-                                        <Table.Row key={log.created_at}>
-                                            <Table.Cell>{renderTimestamp(log.created_at)}</Table.Cell>
-                                            <Table.Cell>{renderType(log.type)}</Table.Cell>
-                                            <Table.Cell>{log.model_name ?
-                                                <Label basic>{log.model_name}</Label> : ''}</Table.Cell>
-                                            <Table.Cell>{log.prompt_tokens ? log.prompt_tokens : ''}</Table.Cell>
-                                            <Table.Cell>{log.completion_tokens ? log.completion_tokens : ''}</Table.Cell>
-                                            <Table.Cell>{log.quota ? renderQuota(log.quota, 6) : ''}</Table.Cell>
-                                            <Table.Cell>{log.content}</Table.Cell>
-                                        </Table.Row>
-                                    );
-                                })}
-                        </Table.Body>
-
-                        <Table.Footer>
-                            <Table.Row>
-                                <Table.HeaderCell colSpan={'9'}>
-                                    {/*<Select*/}
-                                    {/*  placeholder='选择明细分类'*/}
-                                    {/*  options={LOG_OPTIONS}*/}
-                                    {/*  style={{ marginRight: '8px' }}*/}
-                                    {/*  name='logType'*/}
-                                    {/*  value={logType}*/}
-                                    {/*  onChange={(e, { name, value }) => {*/}
-                                    {/*    setLogType(value);*/}
-                                    {/*  }}*/}
-                                    {/*/>*/}
-                                    {/*<Button size='small' onClick={refresh} loading={loading}>刷新</Button>*/}
-                                    <Pagination
-                                        floated='right'
-                                        activePage={activePage}
-                                        onPageChange={onPaginationChange}
-                                        size='small'
-                                        siblingRange={1}
-                                        totalPages={
-                                            Math.ceil(logs.length / ITEMS_PER_PAGE) +
-                                            (logs.length % ITEMS_PER_PAGE === 0 ? 1 : 0)
-                                        }
-                                    />
-                                </Table.HeaderCell>
-                            </Table.Row>
-                        </Table.Footer>
-                    </Table>
+            <Collapse activeKey={activeKeys} onChange={(keys) => {
+                if (keys.length === 0) {
+                    setActiveKeys(['1', '2']);
+                } else {
+                    setActiveKeys(keys);
                 }
-            </Segment>
-        </>
+            }}>
+                {process.env.REACT_APP_SHOW_BALANCE === "true" && (
+                    <Panel
+                        header="令牌信息"
+                        itemKey="1"
+                        extra={
+                            <Button icon={<IconCopy />} theme='borderless' type='primary' onClick={(e) => copyTokenInfo(e)} disabled={!tokenValid}>
+                                复制令牌信息
+                            </Button>
+                        }
+                        disabled={!tokenValid}
+                    >
+                        <Spin spinning={loading}>
+                            <div style={{ marginBottom: 16 }}>
+                                <Text type="secondary">
+                                    令牌总额：{balance === 100000000 ? "无限" : balance === "未知" ? "未知" : `${balance}`}
+                                </Text>
+                                <br /><br />
+                                <Text type="secondary">
+                                    剩余额度：{balance === 100000000 ? "无限制" : balance === "未知" || usage === "未知" ? "未知" : `${balance - usage}`}
+                                </Text>
+                                <br /><br />
+                                <Text type="secondary">
+                                    已用额度：{balance === 100000000 ? "不进行计算" : usage === "未知" ? "未知" : `${usage}`}
+                                </Text>
+                            </div>
+                        </Spin>
+                    </Panel>
+                )}
+                {process.env.REACT_APP_SHOW_DETAIL === "true" && (
+                    <Panel
+                        header="调用详情"
+                        itemKey="2"
+                        extra={
+                            <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!tokenValid || logs.length === 0}>
+                                导出为CSV文件
+                            </Button>
+                        }
+                        disabled={!tokenValid}
+                    >
+                        <Spin spinning={loading}>
+                            <Table
+                                columns={columns}
+                                dataSource={logs}
+                                pagination={{
+                                    pageSize: ITEMS_PER_PAGE,
+                                    hideOnSinglePage: true,
+                                }}
+                            />
+                        </Spin>
+                    </Panel>
+                )}
+            </Collapse>
+        </Card>
     );
 };
 
-export default LogsTable;
+export default KeyUsage;

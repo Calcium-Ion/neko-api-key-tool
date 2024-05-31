@@ -1,18 +1,25 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import { Layout } from '@douyinfe/semi-ui';
 import App from './App';
+import HeaderBar from './components/HeaderBar';
 import reportWebVitals from './reportWebVitals';
 import 'semantic-ui-css/semantic.min.css';
 import './index.css';
-import { Container } from 'semantic-ui-react';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+const { Sider, Content, Header } = Layout;
 root.render(
-  <React.StrictMode>
-      <App />
-
-  </React.StrictMode>
+  <Layout>
+    <Header>
+      <HeaderBar />
+    </Header>
+    <Layout>
+      <Content>
+        <App />
+      </Content>
+    </Layout>
+  </Layout>
 );
 
 // If you want to start measuring performance in your app, pass a function
