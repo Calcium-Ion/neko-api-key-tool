@@ -10,7 +10,8 @@ NewAPI 令牌查询页
 
 </div>
 
-![img.png](img.png)
+![image](https://github.com/Calcium-Ion/neko-api-key-tool/assets/61247483/6732d74e-48e3-4be6-9be4-429ab1b12d23)
+
 
 ### 使用方法
 
