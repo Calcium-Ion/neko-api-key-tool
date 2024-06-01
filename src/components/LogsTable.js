@@ -35,7 +35,7 @@ function renderUseTime(type) {
     }
 }
 
-const KeyUsage = () => {
+const LogsTable = () => {
     const [key, setKey] = useState('');
     const [balance, setBalance] = useState(0);
     const [usage, setUsage] = useState(0);
@@ -234,10 +234,25 @@ const KeyUsage = () => {
             title: '详情',
             dataIndex: 'content',
             render: (text, record, index) => {
-                if (record.other === '') {
-                    record.other = '{}';
+                let other = null;
+                try {
+                    if (record.other === '') {
+                        record.other = '{}';
+                    }
+                    other = JSON.parse(record.other);
+                } catch (e) {
+                    return (
+                        <Tooltip content="该版本不支持显示计算详情">
+                            <Paragraph
+                                ellipsis={{
+                                    rows: 2,
+                                }}
+                            >
+                                {text}
+                            </Paragraph>
+                        </Tooltip>
+                    );
                 }
-                let other = JSON.parse(record.other);
                 if (other == null) {
                     return (
                         <Paragraph
@@ -272,7 +287,7 @@ const KeyUsage = () => {
                     </Tooltip>
                 );
             },
-        },
+        }
     ];
 
     const copyTokenInfo = (e) => {
@@ -400,4 +415,4 @@ const KeyUsage = () => {
     );
 };
 
-export default KeyUsage;
+export default LogsTable;
