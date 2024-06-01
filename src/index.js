@@ -6,20 +6,23 @@ import HeaderBar from './components/HeaderBar';
 import reportWebVitals from './reportWebVitals';
 import 'semantic-ui-css/semantic.min.css';
 import './index.css';
+import { ThemeProvider } from './context/Theme';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 const { Sider, Content, Header } = Layout;
 root.render(
-  <Layout>
-    <Header>
-      <HeaderBar />
-    </Header>
+  <ThemeProvider>
     <Layout>
-      <Content style={{ padding: 24 }}>
-        <App />
-      </Content>
+      <Header>
+        <HeaderBar />
+      </Header>
+      <Layout>
+        <Content style={{ padding: 24 }}>
+          <App />
+        </Content>
+      </Layout>
     </Layout>
-  </Layout>
+  </ThemeProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

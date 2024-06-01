@@ -330,7 +330,7 @@ const LogsTable = () => {
                     showClear
                     value={key}
                     onChange={(value) => setKey(value)}
-                    placeholder="请输入要查询的令牌（sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx）"
+                    placeholder="请输入要查询的令牌 sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                     prefix={<IconSearch />}
                     suffix={
                         <Button
@@ -396,7 +396,7 @@ const LogsTable = () => {
                             itemKey="2"
                             extra={
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <Tag color='green' style={{ marginRight: 5 }}>计算汇率：$1 = 50 0000 tokens</Tag>
+                                    <Tag shape='circle' color='green' style={{ marginRight: 5 }}>计算汇率：$1 = 50 0000 tokens</Tag>
                                     <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!tokenValid || logs.length === 0}>
                                         导出为CSV文件
                                     </Button>
