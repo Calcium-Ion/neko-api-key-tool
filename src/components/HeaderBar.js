@@ -47,11 +47,13 @@ const HeaderBar = () => {
                 onClick={() => setTheme(true)}
               />
             )}
-            <IconGithubLogo
-              size="large"
-              style={{ cursor: 'pointer', marginRight: '10px', color: 'var(--semi-color-text-2)' }}
-              onClick={() => window.open('https://github.com/Calcium-Ion/neko-api-key-tool', '_blank')}
-            />
+            {process.env.REACT_APP_SHOW_ICONGITHUB === "true" && (
+              <IconGithubLogo
+                size="large"
+                style={{ cursor: 'pointer', marginRight: '10px', color: 'var(--semi-color-text-2)' }}
+                onClick={() => window.open('https://github.com/Calcium-Ion/neko-api-key-tool', '_blank')}
+              />
+            )}
           </>
         }
       />
