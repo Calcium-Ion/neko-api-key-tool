@@ -17,4 +17,4 @@ SHOW_BALANCE="true"
 BASE_URL="https://nekoapi.com"
 ```
 
-> 该项目需配合NewAPI才能正常使用：[https://github.com/Calcium-Ion/one-api](https://github.com/Calcium-Ion/new-api)
+> 该项目需配合NewAPI才能正常使用：[https://github.com/Calcium-Ion/new-api](https://github.com/Calcium-Ion/new-api)
