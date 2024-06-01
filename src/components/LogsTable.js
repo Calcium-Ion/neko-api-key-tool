@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Input, Typography, Table, Tag, Spin, Card, Collapse, Toast, Space } from '@douyinfe/semi-ui';
 import { IconSearch, IconCopy, IconDownload } from '@douyinfe/semi-icons';
-import { IconTag } from '@douyinfe/semi-icons-lab';
 import { API, timestamp2string, copy } from '../helpers';
 import { stringToColor } from '../helpers/render';
 import { ITEMS_PER_PAGE } from '../constants';
@@ -45,6 +44,25 @@ const KeyUsage = () => {
     const [loading, setLoading] = useState(false);
     const [activeKeys, setActiveKeys] = useState([]);
     const [tokenValid, setTokenValid] = useState(false);
+    // const [quotaPerUnit, setQuotaPerUnit] = useState('未知');
+
+    // const fetchQuotaPerUnit = async () => {
+    //     try {
+    //         const res = await API.get(`${process.env.REACT_APP_BASE_URL}/api/status`);
+    //         const { success, data } = res.data;
+    //         if (success) {
+    //             setQuotaPerUnit(data.quota_per_unit);
+    //         } else {
+    //             throw new Error('获取站点汇率失败');
+    //         }
+    //     } catch (e) {
+    //         Toast.error(e.message);
+    //     }
+    // };
+
+    // useEffect(() => {
+    //     fetchQuotaPerUnit();
+    // }, []);
 
     const resetData = () => {
         setBalance("未知");
@@ -57,6 +75,11 @@ const KeyUsage = () => {
     const fetchData = async () => {
         if (key === '') {
             Toast.warning('请先输入令牌，再进行查询');
+            return;
+        }
+        // 检查令牌格式
+        if (!/^sk-[a-zA-Z0-9]{48}$/.test(key)) {
+            Toast.error('令牌格式非法！');
             return;
         }
         setLoading(true);
@@ -117,6 +140,29 @@ const KeyUsage = () => {
             dataIndex: 'created_at',
             render: renderTimestamp,
             sorter: (a, b) => a.created_at - b.created_at,
+        },
+        {
+            title: '令牌名称',
+            dataIndex: 'token_name',
+            render: (text, record, index) => {
+                return record.type === 0 || record.type === 2 ? (
+                    <div>
+                        <Tag
+                            color="grey"
+                            size="large"
+                            onClick={() => {
+                                copyText(text);
+                            }}
+                        >
+                            {' '}
+                            {text}{' '}
+                        </Tag>
+                    </div>
+                ) : (
+                    <></>
+                );
+            },
+            sorter: (a, b) => ('' + a.token_name).localeCompare(b.token_name),
         },
         {
             title: '模型',
@@ -231,9 +277,10 @@ const KeyUsage = () => {
 
     const copyTokenInfo = (e) => {
         e.stopPropagation();
-        const info = `令牌总额: ${balance === 100000000 ? '无限' : balance}
-剩余额度: ${balance === 100000000 ? '无限制' : balance - usage}
-已用额度: ${balance === 100000000 ? '不进行计算' : usage}`;
+        const info = `令牌总额: ${balance === 100000000 ? '无限' : `$${balance.toFixed(3)}`}
+剩余额度: ${balance === 100000000 ? '无限制' : `$${(balance - usage).toFixed(3)}`}
+已用额度: ${balance === 100000000 ? '不进行计算' : `$${usage.toFixed(3)}`}
+有效期至: ${accessdate === 0 ? '永不过期' : renderTimestamp(accessdate)}`;
         copyText(info);
     };
 
@@ -266,7 +313,7 @@ const KeyUsage = () => {
                     showClear
                     value={key}
                     onChange={(value) => setKey(value)}
-                    placeholder="请输入要查询的令牌（sk-xxx）"
+                    placeholder="请输入要查询的令牌（sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx）"
                     prefix={<IconSearch />}
                     suffix={
                         <Button
@@ -304,15 +351,15 @@ const KeyUsage = () => {
                         <Spin spinning={loading}>
                             <div style={{ marginBottom: 16 }}>
                                 <Text type="secondary">
-                                    令牌总额：{balance === 100000000 ? "无限" : balance === "未知" ? "未知" : `$${balance}`}
+                                    令牌总额：{balance === 100000000 ? "无限" : balance === "未知" ? "未知" : `$${balance.toFixed(3)}`}
                                 </Text>
                                 <br /><br />
                                 <Text type="secondary">
-                                    剩余额度：{balance === 100000000 ? "无限制" : balance === "未知" || usage === "未知" ? "未知" : `$${balance - usage}`}
+                                    剩余额度：{balance === 100000000 ? "无限制" : balance === "未知" || usage === "未知" ? "未知" : `$${(balance - usage).toFixed(3)}`}
                                 </Text>
                                 <br /><br />
                                 <Text type="secondary">
-                                    已用额度：{balance === 100000000 ? "不进行计算" : usage === "未知" ? "未知" : `$${usage}`}
+                                    已用额度：{balance === 100000000 ? "不进行计算" : usage === "未知" ? "未知" : `$${usage.toFixed(3)}`}
                                 </Text>
                                 <br /><br />
                                 <Text type="secondary">
@@ -327,9 +374,12 @@ const KeyUsage = () => {
                         header="调用详情"
                         itemKey="2"
                         extra={
-                            <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!tokenValid || logs.length === 0}>
-                                导出为CSV文件
-                            </Button>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <Tag color='green' style={{ marginRight: 5 }}>计算汇率：$1 = 50 0000 tokens</Tag>
+                                <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!tokenValid || logs.length === 0}>
+                                    导出为CSV文件
+                                </Button>
+                            </div>
                         }
                         disabled={!tokenValid}
                     >
