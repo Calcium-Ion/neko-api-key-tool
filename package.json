@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@douyinfe/semi-icons": "^2.59.1",
     "@douyinfe/semi-icons-lab": "^2.59.1",
     "@douyinfe/semi-ui": "^2.59.1",
     "@testing-library/jest-dom": "^5.17.0",

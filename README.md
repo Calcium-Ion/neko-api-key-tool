@@ -10,7 +10,7 @@ NewAPI 令牌查询页
 
 </div>
 
-![image](https://github.com/Calcium-Ion/neko-api-key-tool/assets/61247483/6732d74e-48e3-4be6-9be4-429ab1b12d23)
+![image](img.png)
 
 
 ### 使用方法
@@ -28,13 +28,13 @@ cp .env.example .env
 ```
 修改.env文件中的配置
 ```
-# 展示调用详情
-SHOW_DETAIL="true"
+# 展示使用明细
+REACT_APP_SHOW_DETAIL=true
 
-# 展示令牌信息
-SHOW_BALANCE="true"
+# 展示余额
+REACT_APP_SHOW_BALANCE=true
 
-# 填写你NewAPI的BaseURL 结尾不要带/
-BASE_URL="https://nekoapi.com"
+# BaseURL 结尾不要带/
+REACT_APP_BASE_URL=https://nekoapi.com
 ```
 
