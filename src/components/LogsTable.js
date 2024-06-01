@@ -44,6 +44,7 @@ const LogsTable = () => {
     const [loading, setLoading] = useState(false);
     const [activeKeys, setActiveKeys] = useState([]);
     const [tokenValid, setTokenValid] = useState(false);
+    const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
     // const [quotaPerUnit, setQuotaPerUnit] = useState('未知');
 
     // const fetchQuotaPerUnit = async () => {
@@ -409,8 +410,15 @@ const LogsTable = () => {
                                     columns={columns}
                                     dataSource={logs}
                                     pagination={{
-                                        pageSize: ITEMS_PER_PAGE,
+                                        pageSize: pageSize,
                                         hideOnSinglePage: true,
+                                        showSizeChanger: true,
+                                        pageSizeOpts: [10, 20, 50, 100],
+                                        onPageSizeChange: (pageSize) => setPageSize(pageSize),
+                                        showTotal: (total) => `共 ${total} 条`,
+                                        showQuickJumper: true,
+                                        total: logs.length,
+                                        style: { marginTop: 12 },
                                     }}
                                 />
                             </Spin>
