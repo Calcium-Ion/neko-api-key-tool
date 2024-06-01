@@ -27,11 +27,11 @@ function renderIsStream(bool) {
 function renderUseTime(type) {
     const time = parseInt(type);
     if (time < 101) {
-        return <Tag color="green" size="large"> {time} s </Tag>;
+        return <Tag color="green" size="large"> {time} 秒 </Tag>;
     } else if (time < 300) {
-        return <Tag color="orange" size="large"> {time} s </Tag>;
+        return <Tag color="orange" size="large"> {time} 秒 </Tag>;
     } else {
-        return <Tag color="red" size="large"> {time} s </Tag>;
+        return <Tag color="red" size="large"> {time} 秒 </Tag>;
     }
 }
 
@@ -191,7 +191,7 @@ const LogsTable = () => {
             title: '用时',
             dataIndex: 'use_time',
             render: (text, record, index) => {
-                return (
+                return record.model_name.startsWith('mj_') ? null : (
                     <div>
                         <Space>
                             {renderUseTime(text)}
@@ -206,7 +206,9 @@ const LogsTable = () => {
             title: '提示',
             dataIndex: 'prompt_tokens',
             render: (text, record, index) => {
-                return record.type === 0 || record.type === 2 ? <div>{<span> {text} </span>}</div> : <></>;
+                return record.model_name.startsWith('mj_') ? null : (
+                    record.type === 0 || record.type === 2 ? <div>{<span> {text} </span>}</div> : <></>
+                );
             },
             sorter: (a, b) => a.prompt_tokens - b.prompt_tokens,
         },
@@ -322,8 +324,8 @@ const LogsTable = () => {
     };
 
     return (
-        <Card>
-            <div style={{ marginBottom: 16 }}>
+        <>
+            <Card shadows='always'>
                 <Input
                     showClear
                     value={key}
@@ -332,8 +334,11 @@ const LogsTable = () => {
                     prefix={<IconSearch />}
                     suffix={
                         <Button
+                            type='primary'
+                            theme="solid"
                             onClick={fetchData}
                             loading={loading}
+                            disabled={key === ''}
                         >
                             查询
                         </Button>
@@ -344,74 +349,76 @@ const LogsTable = () => {
                         }
                     }}
                 />
-            </div>
-            <Collapse activeKey={activeKeys} onChange={(keys) => {
-                if (keys.length === 0) {
-                    setActiveKeys(['1', '2']);
-                } else {
-                    setActiveKeys(keys);
-                }
-            }}>
-                {process.env.REACT_APP_SHOW_BALANCE === "true" && (
-                    <Panel
-                        header="令牌信息"
-                        itemKey="1"
-                        extra={
-                            <Button icon={<IconCopy />} theme='borderless' type='primary' onClick={(e) => copyTokenInfo(e)} disabled={!tokenValid}>
-                                复制令牌信息
-                            </Button>
-                        }
-                        disabled={!tokenValid}
-                    >
-                        <Spin spinning={loading}>
-                            <div style={{ marginBottom: 16 }}>
-                                <Text type="secondary">
-                                    令牌总额：{balance === 100000000 ? "无限" : balance === "未知" ? "未知" : `$${balance.toFixed(3)}`}
-                                </Text>
-                                <br /><br />
-                                <Text type="secondary">
-                                    剩余额度：{balance === 100000000 ? "无限制" : balance === "未知" || usage === "未知" ? "未知" : `$${(balance - usage).toFixed(3)}`}
-                                </Text>
-                                <br /><br />
-                                <Text type="secondary">
-                                    已用额度：{balance === 100000000 ? "不进行计算" : usage === "未知" ? "未知" : `$${usage.toFixed(3)}`}
-                                </Text>
-                                <br /><br />
-                                <Text type="secondary">
-                                    有效期至：{accessdate === 0 ? '永不过期' : accessdate === "未知" ? '未知' : renderTimestamp(accessdate)}
-                                </Text>
-                            </div>
-                        </Spin>
-                    </Panel>
-                )}
-                {process.env.REACT_APP_SHOW_DETAIL === "true" && (
-                    <Panel
-                        header="调用详情"
-                        itemKey="2"
-                        extra={
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <Tag color='green' style={{ marginRight: 5 }}>计算汇率：$1 = 50 0000 tokens</Tag>
-                                <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!tokenValid || logs.length === 0}>
-                                    导出为CSV文件
+            </Card>
+            <Card shadows='always' style={{ marginTop: 24 }}>
+                <Collapse activeKey={activeKeys} onChange={(keys) => {
+                    if (keys.length === 0) {
+                        setActiveKeys(['1', '2']);
+                    } else {
+                        setActiveKeys(keys);
+                    }
+                }}>
+                    {process.env.REACT_APP_SHOW_BALANCE === "true" && (
+                        <Panel
+                            header="令牌信息"
+                            itemKey="1"
+                            extra={
+                                <Button icon={<IconCopy />} theme='borderless' type='primary' onClick={(e) => copyTokenInfo(e)} disabled={!tokenValid}>
+                                    复制令牌信息
                                 </Button>
-                            </div>
-                        }
-                        disabled={!tokenValid}
-                    >
-                        <Spin spinning={loading}>
-                            <Table
-                                columns={columns}
-                                dataSource={logs}
-                                pagination={{
-                                    pageSize: ITEMS_PER_PAGE,
-                                    hideOnSinglePage: true,
-                                }}
-                            />
-                        </Spin>
-                    </Panel>
-                )}
-            </Collapse>
-        </Card>
+                            }
+                            disabled={!tokenValid}
+                        >
+                            <Spin spinning={loading}>
+                                <div style={{ marginBottom: 16 }}>
+                                    <Text type="secondary">
+                                        令牌总额：{balance === 100000000 ? "无限" : balance === "未知" ? "未知" : `$${balance.toFixed(3)}`}
+                                    </Text>
+                                    <br /><br />
+                                    <Text type="secondary">
+                                        剩余额度：{balance === 100000000 ? "无限制" : balance === "未知" || usage === "未知" ? "未知" : `$${(balance - usage).toFixed(3)}`}
+                                    </Text>
+                                    <br /><br />
+                                    <Text type="secondary">
+                                        已用额度：{balance === 100000000 ? "不进行计算" : usage === "未知" ? "未知" : `$${usage.toFixed(3)}`}
+                                    </Text>
+                                    <br /><br />
+                                    <Text type="secondary">
+                                        有效期至：{accessdate === 0 ? '永不过期' : accessdate === "未知" ? '未知' : renderTimestamp(accessdate)}
+                                    </Text>
+                                </div>
+                            </Spin>
+                        </Panel>
+                    )}
+                    {process.env.REACT_APP_SHOW_DETAIL === "true" && (
+                        <Panel
+                            header="调用详情"
+                            itemKey="2"
+                            extra={
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <Tag color='green' style={{ marginRight: 5 }}>计算汇率：$1 = 50 0000 tokens</Tag>
+                                    <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!tokenValid || logs.length === 0}>
+                                        导出为CSV文件
+                                    </Button>
+                                </div>
+                            }
+                            disabled={!tokenValid}
+                        >
+                            <Spin spinning={loading}>
+                                <Table
+                                    columns={columns}
+                                    dataSource={logs}
+                                    pagination={{
+                                        pageSize: ITEMS_PER_PAGE,
+                                        hideOnSinglePage: true,
+                                    }}
+                                />
+                            </Spin>
+                        </Panel>
+                    )}
+                </Collapse>
+            </Card>
+        </>
     );
 };
 

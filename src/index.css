@@ -33,3 +33,12 @@ code {
     display: none !important;
   }
 } */
+
+.semi-card {
+  border-radius: 20px !important;
+}
+
+.semi-button,
+.semi-input-wrapper {
+  border-radius: 8px !important;
+}

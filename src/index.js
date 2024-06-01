@@ -15,7 +15,7 @@ root.render(
       <HeaderBar />
     </Header>
     <Layout>
-      <Content>
+      <Content style={{ padding: 24 }}>
         <App />
       </Content>
     </Layout>
