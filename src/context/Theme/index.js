@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext(null);
 export const useTheme = () => useContext(ThemeContext);
@@ -9,17 +9,18 @@ export const useSetTheme = () => useContext(SetThemeContext);
 export const ThemeProvider = ({ children }) => {
   const [theme, _setTheme] = useState(() => {
     try {
-      return localStorage.getItem('theme-mode') || null;
+      return localStorage.getItem('theme-mode') || 'light';
     } catch {
-      return null;
+      return 'light';
     }
   });
 
   const setTheme = useCallback((input) => {
-    _setTheme(input ? 'dark' : 'light');
+    const newTheme = input ? 'dark' : 'light';
+    _setTheme(newTheme);
 
     const body = document.body;
-    if (!input) {
+    if (newTheme === 'light') {
       body.removeAttribute('theme-mode');
       localStorage.setItem('theme-mode', 'light');
     } else {
@@ -27,6 +28,15 @@ export const ThemeProvider = ({ children }) => {
       localStorage.setItem('theme-mode', 'dark');
     }
   }, []);
+
+  useEffect(() => {
+    const body = document.body;
+    if (theme === 'dark') {
+      body.setAttribute('theme-mode', 'dark');
+    } else {
+      body.removeAttribute('theme-mode');
+    }
+  }, [theme]);
 
   return (
     <SetThemeContext.Provider value={setTheme}>
