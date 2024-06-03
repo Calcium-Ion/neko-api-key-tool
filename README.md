@@ -25,6 +25,20 @@ REACT_APP_SHOW_DETAIL: 是否展示调用详情，true 或 false
 REACT_APP_BASE_URL: 你的NewAPI项目地址
 REACT_APP_SHOW_DETAIL: 是否展示调用详情，true 或 false
 REACT_APP_SHOW_ICONGITHUB: 是否展示Github图标，true 或 false
+
+例如：
+# 展示使用明细
+REACT_APP_SHOW_DETAIL=true
+
+# 展示余额
+REACT_APP_SHOW_BALANCE=true
+
+# NewAPI的BaseURL（支持多个NewAPI站点聚合查询，键值对中的键为站点名称，值为站点的URL）
+REACT_APP_BASE_URL='{"server1": "https://api.server1.com", "server2": "https://api.server2.com"}'
+
+# 是否显示GitHub图标
+REACT_APP_SHOW_ICONGITHUB=true
+
 ```
 
 3. 部署完毕后，即可开始使用；
