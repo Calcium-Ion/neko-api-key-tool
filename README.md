@@ -23,15 +23,16 @@ NewAPI 令牌查询页
 REACT_APP_SHOW_BALANCE: 是否展示令牌信息，true 或 false
 REACT_APP_SHOW_DETAIL: 是否展示调用详情，true 或 false
 REACT_APP_BASE_URL: 你的NewAPI项目地址
-REACT_APP_SHOW_DETAIL: 是否展示调用详情，true 或 false
 REACT_APP_SHOW_ICONGITHUB: 是否展示Github图标，true 或 false
+```
 
-例如：
-# 展示使用明细
-REACT_APP_SHOW_DETAIL=true
-
-# 展示余额
+例如如下配置：
+```
+# 展示令牌信息
 REACT_APP_SHOW_BALANCE=true
+
+# 展示调用详情
+REACT_APP_SHOW_DETAIL=true
 
 # NewAPI的BaseURL（支持多个NewAPI站点聚合查询，键值对中的键为站点名称，值为站点的URL）
 REACT_APP_BASE_URL={"server1": "https://api.server1.com", "server2": "https://api.server2.com"}
