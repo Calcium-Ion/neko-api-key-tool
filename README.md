@@ -37,7 +37,7 @@ REACT_APP_SHOW_DETAIL=true
 # NewAPI的BaseURL（支持多个NewAPI站点聚合查询，键值对中的键为站点名称，值为站点的URL）
 REACT_APP_BASE_URL={"server1": "https://api.server1.com", "server2": "https://api.server2.com"}
 
-# 是否显示GitHub图标
+# 展示GitHub图标
 REACT_APP_SHOW_ICONGITHUB=true
 ```
 
