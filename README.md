@@ -38,7 +38,6 @@ REACT_APP_BASE_URL={"server1": "https://api.server1.com", "server2": "https://ap
 
 # 是否显示GitHub图标
 REACT_APP_SHOW_ICONGITHUB=true
-
 ```
 
 3. 部署完毕后，即可开始使用；
