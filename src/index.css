@@ -1,14 +1,8 @@
-/* body {
-  margin: 0;
-  padding-top: 55px;
-  overflow-y: scroll;
-  font-family: Lato, 'Helvetica Neue', Arial, Helvetica, "Microsoft YaHei", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  scrollbar-width: none;
+body {
+  background-color: var(--semi-color-bg-0);
 }
 
-body::-webkit-scrollbar {
+/* body::-webkit-scrollbar {
   display: none;
 }
 
@@ -33,3 +27,12 @@ code {
     display: none !important;
   }
 } */
+
+.semi-card {
+  border-radius: 20px !important;
+}
+
+.semi-button,
+.semi-input-wrapper {
+  border-radius: 8px !important;
+}

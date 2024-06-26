@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input, Typography, Table, Tag, Spin, Card, Collapse, Toast, Space } from '@douyinfe/semi-ui';
+import { Button, Input, Typography, Table, Tag, Spin, Card, Collapse, Toast, Space, Tabs } from '@douyinfe/semi-ui';
 import { IconSearch, IconCopy, IconDownload } from '@douyinfe/semi-icons';
 import { API, timestamp2string, copy } from '../helpers';
 import { stringToColor } from '../helpers/render';
@@ -11,6 +11,7 @@ import Papa from 'papaparse';
 
 const { Text } = Typography;
 const { Panel } = Collapse;
+const { TabPane } = Tabs;
 
 function renderTimestamp(timestamp) {
     return timestamp2string(timestamp);
@@ -27,87 +28,87 @@ function renderIsStream(bool) {
 function renderUseTime(type) {
     const time = parseInt(type);
     if (time < 101) {
-        return <Tag color="green" size="large"> {time} s </Tag>;
+        return <Tag color="green" size="large"> {time} 秒 </Tag>;
     } else if (time < 300) {
-        return <Tag color="orange" size="large"> {time} s </Tag>;
+        return <Tag color="orange" size="large"> {time} 秒 </Tag>;
     } else {
-        return <Tag color="red" size="large"> {time} s </Tag>;
+        return <Tag color="red" size="large"> {time} 秒 </Tag>;
     }
 }
 
 const LogsTable = () => {
-    const [key, setKey] = useState('');
-    const [balance, setBalance] = useState(0);
-    const [usage, setUsage] = useState(0);
-    const [accessdate, setAccessDate] = useState(0);
-    const [logs, setLogs] = useState([]);
+    const [apikey, setAPIKey] = useState('');
+    const [activeTabKey, setActiveTabKey] = useState('');
+    const [tabData, setTabData] = useState({});
     const [loading, setLoading] = useState(false);
     const [activeKeys, setActiveKeys] = useState([]);
-    const [tokenValid, setTokenValid] = useState(false);
-    // const [quotaPerUnit, setQuotaPerUnit] = useState('未知');
+    const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
+    const [baseUrl, setBaseUrl] = useState('');
+    const baseUrls = JSON.parse(process.env.REACT_APP_BASE_URL);  // 解析环境变量
 
-    // const fetchQuotaPerUnit = async () => {
-    //     try {
-    //         const res = await API.get(`${process.env.REACT_APP_BASE_URL}/api/status`);
-    //         const { success, data } = res.data;
-    //         if (success) {
-    //             setQuotaPerUnit(data.quota_per_unit);
-    //         } else {
-    //             throw new Error('获取站点汇率失败');
-    //         }
-    //     } catch (e) {
-    //         Toast.error(e.message);
-    //     }
-    // };
+    useEffect(() => {
+        // 默认设置第一个地址为baseUrl
+        const firstKey = Object.keys(baseUrls)[0];
+        setActiveTabKey(firstKey);
+        setBaseUrl(baseUrls[firstKey]);
+    }, []);
 
-    // useEffect(() => {
-    //     fetchQuotaPerUnit();
-    // }, []);
+    const handleTabChange = (key) => {
+        setActiveTabKey(key);
+        setBaseUrl(baseUrls[key]);
+    };
 
-    const resetData = () => {
-        setBalance("未知");
-        setUsage("未知");
-        setAccessDate("未知");
-        setLogs([]);
-        setTokenValid(false);
+    const resetData = (key) => {
+        setTabData((prevData) => ({
+            ...prevData,
+            [key]: {
+                balance: 0,
+                usage: 0,
+                accessdate: "未知",
+                logs: [],
+                tokenValid: false,
+            }
+        }));
     };
 
     const fetchData = async () => {
-        if (key === '') {
+        if (apikey === '') {
             Toast.warning('请先输入令牌，再进行查询');
             return;
         }
         // 检查令牌格式
-        if (!/^sk-[a-zA-Z0-9]{48}$/.test(key)) {
+        if (!/^sk-[a-zA-Z0-9]{48}$/.test(apikey)) {
             Toast.error('令牌格式非法！');
             return;
         }
         setLoading(true);
         try {
+            let newTabData = { ...tabData[activeTabKey], balance: 0, usage: 0, accessdate: 0, logs: [], tokenValid: false };
+
             if (process.env.REACT_APP_SHOW_BALANCE === "true") {
-                const subscription = await API.get(`${process.env.REACT_APP_BASE_URL}/v1/dashboard/billing/subscription`, {
-                    headers: { Authorization: `Bearer ${key}` },
+                const subscription = await API.get(`${baseUrl}/v1/dashboard/billing/subscription`, {
+                    headers: { Authorization: `Bearer ${apikey}` },
                 });
                 const subscriptionData = subscription.data;
-                setBalance(subscriptionData.hard_limit_usd);
-                setTokenValid(true);
+                newTabData.balance = subscriptionData.hard_limit_usd;
+                newTabData.tokenValid = true;
 
                 let now = new Date();
                 let start = new Date(now.getTime() - 100 * 24 * 3600 * 1000);
-                let start_date = start.getFullYear() + '-' + (start.getMonth() + 1) + '-' + start.getDate();
-                let end_date = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
-                const res = await API.get(`${process.env.REACT_APP_BASE_URL}/v1/dashboard/billing/usage?start_date=${start_date}&end_date=${end_date}`, {
-                    headers: { Authorization: `Bearer ${key}` },
+                let start_date = `${start.getFullYear()}-${start.getMonth() + 1}-${start.getDate()}`;
+                let end_date = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+                const res = await API.get(`${baseUrl}/v1/dashboard/billing/usage?start_date=${start_date}&end_date=${end_date}`, {
+                    headers: { Authorization: `Bearer ${apikey}` },
                 });
                 const data = res.data;
-                setUsage(data.total_usage / 100);
+                newTabData.usage = data.total_usage / 100;
             }
 
             if (process.env.REACT_APP_SHOW_DETAIL === "true") {
-                const logRes = await API.get(`${process.env.REACT_APP_BASE_URL}/api/log/token?key=${key}`);
+                const logRes = await API.get(`${baseUrl}/api/log/token?key=${apikey}`);
                 const { success, message, data: logData } = logRes.data;
                 if (success) {
-                    setLogs(logData.reverse());
+                    newTabData.logs = logData.reverse();
                     let quota = 0;
                     for (let i = 0; i < logData.length; i++) {
                         quota += logData[i].quota;
@@ -117,10 +118,15 @@ const LogsTable = () => {
                     Toast.error('查询调用详情失败，请输入正确的令牌');
                 }
             }
+
+            setTabData((prevData) => ({
+                ...prevData,
+                [activeTabKey]: newTabData,
+            }));
             setLoading(false);
         } catch (e) {
             Toast.error("查询失败，请输入正确的令牌");
-            resetData(); // 如果发生错误，重置所有数据为默认值
+            resetData(activeTabKey); // 如果发生错误，重置所有数据为默认值
             setLoading(false);
             return;
         }
@@ -191,7 +197,7 @@ const LogsTable = () => {
             title: '用时',
             dataIndex: 'use_time',
             render: (text, record, index) => {
-                return (
+                return record.model_name.startsWith('mj_') ? null : (
                     <div>
                         <Space>
                             {renderUseTime(text)}
@@ -206,7 +212,9 @@ const LogsTable = () => {
             title: '提示',
             dataIndex: 'prompt_tokens',
             render: (text, record, index) => {
-                return record.type === 0 || record.type === 2 ? <div>{<span> {text} </span>}</div> : <></>;
+                return record.model_name.startsWith('mj_') ? null : (
+                    record.type === 0 || record.type === 2 ? <div>{<span> {text} </span>}</div> : <></>
+                );
             },
             sorter: (a, b) => a.prompt_tokens - b.prompt_tokens,
         },
@@ -292,15 +300,19 @@ const LogsTable = () => {
 
     const copyTokenInfo = (e) => {
         e.stopPropagation();
-        const info = `令牌总额: ${balance === 100000000 ? '无限' : `$${balance.toFixed(3)}`}
-剩余额度: ${balance === 100000000 ? '无限制' : `$${(balance - usage).toFixed(3)}`}
-已用额度: ${balance === 100000000 ? '不进行计算' : `$${usage.toFixed(3)}`}
+        const activeTabData = tabData[activeTabKey] || {};
+        const { balance, usage, accessdate } = activeTabData;
+        const info = `令牌总额: ${balance === 100000000 ? '无限' : `${balance.toFixed(3)}`}
+剩余额度: ${balance === 100000000 ? '无限制' : `${(balance - usage).toFixed(3)}`}
+已用额度: ${balance === 100000000 ? '不进行计算' : `${usage.toFixed(3)}`}
 有效期至: ${accessdate === 0 ? '永不过期' : renderTimestamp(accessdate)}`;
         copyText(info);
     };
 
     const exportCSV = (e) => {
         e.stopPropagation();
+        const activeTabData = tabData[activeTabKey] || { logs: [] };
+        const { logs } = activeTabData;
         const csvData = logs.map(log => ({
             '时间': renderTimestamp(log.created_at),
             '模型': log.model_name,
@@ -321,19 +333,24 @@ const LogsTable = () => {
         document.body.removeChild(link);
     };
 
-    return (
-        <Card>
-            <div style={{ marginBottom: 16 }}>
+    const activeTabData = tabData[activeTabKey] || { logs: [], balance: 0, usage: 0, accessdate: "未知", tokenValid: false };
+
+    const renderContent = () => (
+        <>
+            <Card style={{ marginTop: 24 }}>
                 <Input
                     showClear
-                    value={key}
-                    onChange={(value) => setKey(value)}
-                    placeholder="请输入要查询的令牌（sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx）"
+                    value={apikey}
+                    onChange={(value) => setAPIKey(value)}
+                    placeholder="请输入要查询的令牌 sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                     prefix={<IconSearch />}
                     suffix={
                         <Button
+                            type='primary'
+                            theme="solid"
                             onClick={fetchData}
                             loading={loading}
+                            disabled={apikey === ''}
                         >
                             查询
                         </Button>
@@ -344,74 +361,91 @@ const LogsTable = () => {
                         }
                     }}
                 />
-            </div>
-            <Collapse activeKey={activeKeys} onChange={(keys) => {
-                if (keys.length === 0) {
-                    setActiveKeys(['1', '2']);
-                } else {
-                    setActiveKeys(keys);
-                }
-            }}>
-                {process.env.REACT_APP_SHOW_BALANCE === "true" && (
-                    <Panel
-                        header="令牌信息"
-                        itemKey="1"
-                        extra={
-                            <Button icon={<IconCopy />} theme='borderless' type='primary' onClick={(e) => copyTokenInfo(e)} disabled={!tokenValid}>
-                                复制令牌信息
-                            </Button>
-                        }
-                        disabled={!tokenValid}
-                    >
-                        <Spin spinning={loading}>
-                            <div style={{ marginBottom: 16 }}>
-                                <Text type="secondary">
-                                    令牌总额：{balance === 100000000 ? "无限" : balance === "未知" ? "未知" : `$${balance.toFixed(3)}`}
-                                </Text>
-                                <br /><br />
-                                <Text type="secondary">
-                                    剩余额度：{balance === 100000000 ? "无限制" : balance === "未知" || usage === "未知" ? "未知" : `$${(balance - usage).toFixed(3)}`}
-                                </Text>
-                                <br /><br />
-                                <Text type="secondary">
-                                    已用额度：{balance === 100000000 ? "不进行计算" : usage === "未知" ? "未知" : `$${usage.toFixed(3)}`}
-                                </Text>
-                                <br /><br />
-                                <Text type="secondary">
-                                    有效期至：{accessdate === 0 ? '永不过期' : accessdate === "未知" ? '未知' : renderTimestamp(accessdate)}
-                                </Text>
-                            </div>
-                        </Spin>
-                    </Panel>
-                )}
-                {process.env.REACT_APP_SHOW_DETAIL === "true" && (
-                    <Panel
-                        header="调用详情"
-                        itemKey="2"
-                        extra={
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <Tag color='green' style={{ marginRight: 5 }}>计算汇率：$1 = 50 0000 tokens</Tag>
-                                <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!tokenValid || logs.length === 0}>
-                                    导出为CSV文件
+            </Card>
+            <Card style={{ marginTop: 24 }}>
+                <Collapse activeKey={activeKeys} onChange={(keys) => setActiveKeys(keys)}>
+                    {process.env.REACT_APP_SHOW_BALANCE === "true" && (
+                        <Panel
+                            header="令牌信息"
+                            itemKey="1"
+                            extra={
+                                <Button icon={<IconCopy />} theme='borderless' type='primary' onClick={(e) => copyTokenInfo(e)} disabled={!activeTabData.tokenValid}>
+                                    复制令牌信息
                                 </Button>
-                            </div>
-                        }
-                        disabled={!tokenValid}
-                    >
-                        <Spin spinning={loading}>
-                            <Table
-                                columns={columns}
-                                dataSource={logs}
-                                pagination={{
-                                    pageSize: ITEMS_PER_PAGE,
-                                    hideOnSinglePage: true,
-                                }}
-                            />
-                        </Spin>
-                    </Panel>
-                )}
-            </Collapse>
-        </Card>
+                            }
+                        >
+                            <Spin spinning={loading}>
+                                <div style={{ marginBottom: 16 }}>
+                                    <Text type="secondary">
+                                        令牌总额：{activeTabData.balance === 100000000 ? "无限" : activeTabData.balance === "未知" || activeTabData.balance === undefined ? "未知" : `${activeTabData.balance.toFixed(3)}`}
+                                    </Text>
+                                    <br /><br />
+                                    <Text type="secondary">
+                                        剩余额度：{activeTabData.balance === 100000000 ? "无限制" : activeTabData.balance === "未知" || activeTabData.usage === "未知" || activeTabData.balance === undefined || activeTabData.usage === undefined ? "未知" : `${(activeTabData.balance - activeTabData.usage).toFixed(3)}`}
+                                    </Text>
+                                    <br /><br />
+                                    <Text type="secondary">
+                                        已用额度：{activeTabData.balance === 100000000 ? "不进行计算" : activeTabData.usage === "未知" || activeTabData.usage === undefined ? "未知" : `${activeTabData.usage.toFixed(3)}`}
+                                    </Text>
+                                    <br /><br />
+                                    <Text type="secondary">
+                                        有效期至：{activeTabData.accessdate === 0 ? '永不过期' : activeTabData.accessdate === "未知" ? '未知' : renderTimestamp(activeTabData.accessdate)}
+                                    </Text>
+                                </div>
+                            </Spin>
+                        </Panel>
+                    )}
+                    {process.env.REACT_APP_SHOW_DETAIL === "true" && (
+                        <Panel
+                            header="调用详情"
+                            itemKey="2"
+                            extra={
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <Tag shape='circle' color='green' style={{ marginRight: 5 }}>计算汇率：$1 = 50 0000 tokens</Tag>
+                                    <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!activeTabData.tokenValid || activeTabData.logs.length === 0}>
+                                        导出为CSV文件
+                                    </Button>
+                                </div>
+                            }
+                        >
+                            <Spin spinning={loading}>
+                                <Table
+                                    columns={columns}
+                                    dataSource={activeTabData.logs}
+                                    pagination={{
+                                        pageSize: pageSize,
+                                        hideOnSinglePage: true,
+                                        showSizeChanger: true,
+                                        pageSizeOpts: [10, 20, 50, 100],
+                                        onPageSizeChange: (pageSize) => setPageSize(pageSize),
+                                        showTotal: (total) => `共 ${total} 条`,
+                                        showQuickJumper: true,
+                                        total: activeTabData.logs.length,
+                                        style: { marginTop: 12 },
+                                    }}
+                                />
+                            </Spin>
+                        </Panel>
+                    )}
+                </Collapse>
+            </Card>
+        </>
+    );
+
+    return (
+        <>
+            {Object.keys(baseUrls).length > 1 ? (
+                <Tabs type="line" onChange={handleTabChange}>
+                    {Object.entries(baseUrls).map(([key, url]) => (
+                        <TabPane tab={key} itemKey={key} key={key}>
+                            {renderContent()}
+                        </TabPane>
+                    ))}
+                </Tabs>
+            ) : (
+                renderContent()
+            )}
+        </>
     );
 };
 
