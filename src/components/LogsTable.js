@@ -82,8 +82,9 @@ const LogsTable = () => {
             return;
         }
         setLoading(true);
+        let newTabData = { ...tabData[activeTabKey], balance: 0, usage: 0, accessdate: 0, logs: [], tokenValid: false };
+
         try {
-            let newTabData = { ...tabData[activeTabKey], balance: 0, usage: 0, accessdate: 0, logs: [], tokenValid: false };
 
             if (process.env.REACT_APP_SHOW_BALANCE === "true") {
                 const subscription = await API.get(`${baseUrl}/v1/dashboard/billing/subscription`, {
@@ -103,7 +104,13 @@ const LogsTable = () => {
                 const data = res.data;
                 newTabData.usage = data.total_usage / 100;
             }
-
+        } catch (e) {
+            console.log(e)
+            Toast.error("令牌已用尽");
+            resetData(activeTabKey); // 如果发生错误，重置所有数据为默认值
+            setLoading(false);
+        }
+        try {
             if (process.env.REACT_APP_SHOW_DETAIL === "true") {
                 const logRes = await API.get(`${baseUrl}/api/log/token?key=${apikey}`);
                 const { success, message, data: logData } = logRes.data;
@@ -118,18 +125,17 @@ const LogsTable = () => {
                     Toast.error('查询调用详情失败，请输入正确的令牌');
                 }
             }
-
-            setTabData((prevData) => ({
-                ...prevData,
-                [activeTabKey]: newTabData,
-            }));
-            setLoading(false);
         } catch (e) {
             Toast.error("查询失败，请输入正确的令牌");
             resetData(activeTabKey); // 如果发生错误，重置所有数据为默认值
             setLoading(false);
-            return;
         }
+        setTabData((prevData) => ({
+            ...prevData,
+            [activeTabKey]: newTabData,
+        }));
+        setLoading(false);
+
     };
 
     const copyText = async (text) => {
