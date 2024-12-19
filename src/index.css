@@ -1,5 +1,8 @@
 body {
   background-color: var(--semi-color-bg-0);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
 }
 
 /* body::-webkit-scrollbar {
@@ -35,4 +38,65 @@ code {
 .semi-button,
 .semi-input-wrapper {
   border-radius: 8px !important;
+}
+
+@media only screen and (max-width: 767px) {
+  /*.semi-navigation-sub-wrap .semi-navigation-sub-title, .semi-navigation-item {*/
+  /*  padding: 0 0;*/
+  /*}*/
+  .topnav .semi-navigation-list-wrapper {
+    max-width: calc(55vw - 20px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  #root > section > header > section > div > div > div > div.semi-navigation-footer > div > a > li {
+    padding: 0 0;
+  }
+  #root > section > header > section > div > div > div > div.semi-navigation-header-list-outer > div.semi-navigation-list-wrapper > ul > div > a > li {
+    padding: 0 5px;
+  }
+  #root > section > header > section > div > div > div > div.semi-navigation-footer > div:nth-child(1) > a > li {
+    padding: 0 5px;
+  }
+  .semi-navigation-footer {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .semi-table-tbody,
+  .semi-table-row,
+  .semi-table-row-cell {
+    display: block !important;
+    width: auto !important;
+    padding: 2px !important;
+  }
+  .semi-table-row-cell {
+    border-bottom: 0 !important;
+  }
+  .semi-table-tbody > .semi-table-row {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  .semi-space {
+    /*display: block!important;*/
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    row-gap: 3px;
+    column-gap: 10px;
+  }
+
+  .semi-navigation-horizontal .semi-navigation-header {
+    margin-right: 0;
+  }
+}
+
+/* 启用响应式布局相关样式 */
+@media screen and (max-width: 768px) {
+  .semi-card {
+    border-radius: 12px !important;
+  }
+  
+  .semi-button,
+  .semi-input-wrapper {
+    border-radius: 6px !important;
+  }
 }

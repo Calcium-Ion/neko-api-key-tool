@@ -12,12 +12,17 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 const { Sider, Content, Header } = Layout;
 root.render(
   <ThemeProvider>
-    <Layout>
-      <Header>
+    <Layout style={{ minHeight: '100vh' }}>
+      <Header style={{ position: 'sticky', top: 0, zIndex: 1 }}>
         <HeaderBar />
       </Header>
       <Layout>
-        <Content style={{ padding: 24 }}>
+        <Content style={{ 
+          padding: '24px',
+          '@media screen and (max-width: 768px)': {
+            padding: '12px'
+          }
+        }}>
           <App />
         </Content>
       </Layout>
