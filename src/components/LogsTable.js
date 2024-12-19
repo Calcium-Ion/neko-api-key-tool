@@ -139,9 +139,33 @@ const LogsTable = () => {
     };
 
     const copyText = async (text) => {
-        if (await copy(text)) {
-            Toast.success('已复制：' + text);
-        } else {
+        try {
+            // Try modern clipboard API first
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+                Toast.success('已复制：' + text);
+                return;
+            }
+            
+            // Fallback for Safari and older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                textArea.remove();
+                Toast.success('已复制：' + text);
+            } catch (err) {
+                textArea.remove();
+                Modal.error({ title: '无法复制到剪贴板，请手动复制', content: text });
+            }
+        } catch (err) {
             Modal.error({ title: '无法复制到剪贴板，请手动复制', content: text });
         }
     };
@@ -328,15 +352,29 @@ const LogsTable = () => {
             '花费': log.quota,
             '详情': log.content,
         }));
-        const csvString = '\ufeff' + Papa.unparse(csvData);  // 使用PapaParse库来转换数据
-        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'data.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const csvString = '\ufeff' + Papa.unparse(csvData);
+        
+        try {
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'data.csv';
+            
+            // For Safari compatibility
+            if (navigator.userAgent.indexOf('Safari') > -1 && navigator.userAgent.indexOf('Chrome') === -1) {
+                link.target = '_blank';
+                link.setAttribute('target', '_blank');
+            }
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        } catch (err) {
+            Toast.error('导出失败，请稍后重试');
+            console.error('Export failed:', err);
+        }
     };
 
     const activeTabData = tabData[activeTabKey] || { logs: [], balance: 0, usage: 0, accessdate: "未知", tokenValid: false };
