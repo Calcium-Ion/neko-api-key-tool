@@ -15,6 +15,7 @@ NewAPI 令牌查询页
 
 ### 使用方法
 
+#### Vercel 部署
 1. 准备好你的 [NewAPI项目](https://github.com/Calcium-Ion/new-api);
 2. 点击右侧按钮开始部署：
    [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAI-ASS%2Fneko-api-key-tool&env=REACT_APP_SHOW_DETAIL&env=REACT_APP_SHOW_BALANCE&env=REACT_APP_BASE_URL&env=REACT_APP_SHOW_ICONGITHUB&project-name=neko-api-key-tool&repository-name=neko-api-key-tool)，直接使用 Github 账号登录即可，记得根据自己需求配置环境变量，环境变量如下： 
@@ -43,6 +44,30 @@ REACT_APP_SHOW_ICONGITHUB=true
 
 3. 部署完毕后，即可开始使用；
 4. （可选）[绑定自定义域名](https://vercel.com/docs/concepts/projects/domains/add-a-domain)：Vercel 分配的域名 DNS 在某些区域被污染了，绑定自定义域名即可直连。
+
+#### Docker 部署
+1. 克隆项目到本地:
+```bash
+git clone https://github.com/AI-ASS/neko-api-key-tool.git
+cd neko-api-key-tool
+```
+
+2. 创建并配置环境变量文件:
+```bash
+# 复制.env.example文件为.env
+cp .env.example .env
+# 根据自己需求配置env文件中的环境变量
+vim .env
+```
+
+3. 构建并运行 Docker 容器:
+```bash
+# 构建镜像
+docker build -t neko-api-key-tool .
+
+# 运行容器
+docker run -d -p 80:80 --name neko-api-key-tool neko-api-key-tool
+```
 
 ### 二次开发
 复制.env.example文件为.env，根据自己需求配置env文件中的环境变量。
